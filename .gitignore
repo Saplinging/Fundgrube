@@ -1,0 +1,29 @@
+# .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+.env/
+.envrc
+
+# VSCode
+.vscode/
+
+# Uploads (not versioned)
+backend/uploads/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Secrets
+*.env
+secrets.*
