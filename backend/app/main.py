@@ -1,8 +1,25 @@
-
-# --- EINMALIGE, BEREINIGTE IMPLEMENTIERUNG ---
 import logging
 from pydantic import BaseModel
-from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Body
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Body, Form
+from fastapi.middleware.cors import CORSMiddleware
+from uuid import uuid4
+from datetime import datetime
+import os
+from typing import List, Optional
+import numpy as np
+from app.db.database import SessionLocal, init_db, Item
+from sqlalchemy.future import select
+from app.llm.factory import get_vision_provider, get_chat_provider
+from app.rag.index import DummyEmbeddingProvider, RAGIndex
+
+app = FastAPI()
+
+# Add root route for GET /
+@app.get("/")
+def root():
+    return {"message": "Fundgrube Backend API. See /docs for API documentation."}
+from pydantic import BaseModel
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Body, Form
 from fastapi.middleware.cors import CORSMiddleware
 from uuid import uuid4
 from datetime import datetime
@@ -16,8 +33,9 @@ from app.rag.index import DummyEmbeddingProvider, RAGIndex
 
 class Fundstueck(BaseModel):
     id: str
-    imageUrl: str
-    description: Optional[str] = None
+    image_path: str
+    description: str | None
+    contact: str
     created_at: datetime
     class Config:
         orm_mode = True
@@ -59,7 +77,10 @@ embedding_provider = DummyEmbeddingProvider()
 rag_index = RAGIndex()
 
 @app.post("/items", response_model=Fundstueck, status_code=201)
-async def upload_item(image: UploadFile = File(...)):
+async def upload_item(
+    image: UploadFile = File(...),
+    contact: str = Form(...)
+):
     allowed_types = ["image/jpeg", "image/png", "image/webp"]
     max_size = 5 * 1024 * 1024
     if image.content_type not in allowed_types:
@@ -89,10 +110,10 @@ async def upload_item(image: UploadFile = File(...)):
         embedding = embedding_provider.embed(description)
         rag_index.add(file_id, embedding, model="dummy")
     async with SessionLocal() as session:
-        item = Item(id=file_id, image_path=file_path, description=description, created_at=created)
+        item = Item(id=file_id, image_path=file_path, description=description, contact=contact, created_at=created)
         session.add(item)
         await session.commit()
-    return Fundstueck(id=file_id, imageUrl=file_path, description=description, created_at=created)
+    return Fundstueck(id=file_id, image_path=file_path, description=description, contact=contact, created_at=created)
 
 @app.post("/items/{item_id}/describe", response_model=Fundstueck)
 async def regenerate_description(item_id: str):
@@ -105,6 +126,7 @@ async def regenerate_description(item_id: str):
             vision = get_vision_provider()
             result = vision.describe(item.image_path)
             item.description = result.get("description")
+            # Embedding neu erzeugen und Index aktualisieren
             if item.description:
                 embedding = embedding_provider.embed(item.description)
                 rag_index.update(item.id, embedding, model="dummy")
@@ -250,7 +272,9 @@ async def search_items(
     top_k = int(body.get("top_k", 5))
     if not query:
         raise HTTPException(status_code=400, detail="query fehlt")
-    # ...existing code...
+    @app.get("/")
+    def root():
+        return {"message": "Fundgrube Backend API. See /docs for API documentation."}
 
 @app.post("/rag/reindex")
 async def rag_reindex():

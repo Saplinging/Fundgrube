@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 
 type ChatMessage = {
@@ -49,12 +48,24 @@ const Chat: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: 16, maxWidth: 500, margin: "0 auto" }}>
+    <div style={{ padding: 16, maxWidth: 500, margin: "0 auto", width: "100%" }}>
       <h1>Chat</h1>
-      <div style={{ minHeight: 300, background: "#f5f5f5", borderRadius: 8, padding: 12, marginBottom: 16, overflowY: "auto", maxHeight: 400 }}>
+      <div style={{ background: '#e9ecef', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 15, color: '#333', textAlign: 'left' }}>
+        <b>Hinweis:</b> Hier kannst du einen <b>verlorenen Gegenstand</b> beschreiben. Gib möglichst viele Details an, damit passende Fundstücke gefunden werden können.
+      </div>
+      <div style={{ minHeight: 200, background: "#b0b0b0", borderRadius: 8, padding: 12, marginBottom: 16, overflowY: "auto", maxHeight: 300, width: "100%" }}>
         {messages.map((msg, i) => (
           <div key={i} style={{ marginBottom: 16, textAlign: msg.sender === "user" ? "right" : "left" }}>
-            <div style={{ display: "inline-block", background: msg.sender === "user" ? "#d1e7dd" : "#fff", borderRadius: 8, padding: 8, maxWidth: "80%" }}>
+            <div
+              style={{
+                display: "inline-block",
+                background: msg.sender === "user" ? "#92aacd" : "#fff",
+                color: msg.sender === "bot" ? "#222" : undefined,
+                borderRadius: 8,
+                padding: 8,
+                maxWidth: "80%"
+              }}
+            >
               {msg.text}
             </div>
             {msg.sender === "bot" && msg.results && msg.results.length > 0 && (
@@ -79,14 +90,15 @@ const Chat: React.FC = () => {
         ))}
         <div ref={bottomRef} />
       </div>
-      <form onSubmit={sendMessage} style={{ display: "flex", gap: 8 }}>
+      <form onSubmit={sendMessage} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Nachricht eingeben..."
-          style={{ flex: 1, padding: 10, fontSize: 16, borderRadius: 8, border: "1px solid #ccc" }}
+          placeholder="Frage stellen oder nach einem Bild suchen..."
+          style={{ flex: 1, minWidth: 0, padding: 10, fontSize: 16, borderRadius: 8, border: "1px solid #ccc" }}
           disabled={loading}
+          aria-label="Chatnachricht eingeben"
         />
         <button type="submit" disabled={loading || !input.trim()} style={{ padding: "0 18px", fontSize: 16, borderRadius: 8 }}>
           Senden

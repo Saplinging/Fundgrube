@@ -4,3 +4,5 @@ sqlalchemy
 aiosqlite
 pydantic
 numpy
+requests
+python-multipart

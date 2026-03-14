@@ -6,7 +6,6 @@ services:
       dockerfile: docker/Dockerfile.backend
     volumes:
       - ../backend/uploads:/app/backend/uploads
-      - ../fundgrube.db:/app/fundgrube.db
     environment:
       - VISION_PROVIDER=dummy
       - CHAT_PROVIDER=dummy
