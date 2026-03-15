@@ -1,4 +1,5 @@
 
+
 # Fundgrube API Dokumentation
 
 ## Übersicht
@@ -6,6 +7,15 @@
 REST API für das Lost-and-Found System Fundgrube. Alle Endpunkte liefern JSON.
 
 ---
+
+## Provider-System (Modularität)
+
+- Vision-, Chat- und Embedding-Provider sind modular aufgebaut und über ENV-Variablen auswählbar:
+	- `VISION_PROVIDER` (dummy/ollama/api)
+	- `CHAT_PROVIDER` (dummy/ollama/api)
+	- `EMBEDDING_PROVIDER` (dummy / local / ollama / api / openai)
+- Die Factory-Pattern-Implementierung findet sich in `app/llm/factory.py` (Vision/Chat) und `app/rag/index.py` (Embedding).
+- Standardmäßig ist überall ein Dummy-Provider aktiv. Für lokale Embeddings kann `EMBEDDING_PROVIDER=local` gesetzt werden (Modell: all-MiniLM-L6-v2, sentence-transformers).
 
 ## Endpunkte
 

@@ -44,12 +44,17 @@ Fundgrube ist ein modernes **Lost-and-Found System**:
 |--------------------|----------------------------------------------|------------------------|
 | VISION_PROVIDER    | Provider für Bildbeschreibung                | dummy / ollama / api   |
 | CHAT_PROVIDER      | Provider für Chat                            | dummy / ollama / api   |
+| EMBEDDING_PROVIDER | Provider für Text-Embeddings (RAG)           | dummy / local / ollama / api / openai |
 | OPENAI_API_KEY     | API-Key für OpenAI (nur bei Provider=api)    | sk-...                 |
+| OPENAI_EMBEDDING_MODEL | OpenAI Embedding Modell (optional)           | text-embedding-ada-002 |
 | OLLAMA_HOST        | Host für Ollama-Server (optional)            | http://localhost:11434 |
+| OLLAMA_EMBEDDING_MODEL | Modellname für Ollama Embeddings (optional) | nomic-embed-text       |
 
 **Hinweis:**
 - Standardmäßig sind Dummy-Provider aktiv (keine echten KI-Funktionen, keine Kosten).
 - Für OpenAI/API muss ein API-Key gesetzt werden. Für Ollama muss ein Ollama-Server laufen.
+- Der Embedding-Provider für die RAG-Suche ist jetzt ebenfalls modular und über die ENV-Variable `EMBEDDING_PROVIDER` auswählbar. Standard ist `dummy`. Weitere Provider können einfach ergänzt werden (siehe Code in `backend/app/rag/index.py`).
+- Für lokale Embeddings kann `EMBEDDING_PROVIDER=local` gesetzt werden. Es wird dann das Modell `all-MiniLM-L6-v2` von sentence-transformers genutzt (keine Cloud-Kosten, läuft lokal, benötigt aber ausreichend RAM und CPU).
 
 ---
 
@@ -93,16 +98,50 @@ Fundgrube ist ein modernes **Lost-and-Found System**:
 
 ---
 
+
 ## Architekturüberblick
 
-- **Backend:** FastAPI REST API, SQLite DB, Vision- und Chat-Provider modular
+- **Backend:** FastAPI REST API, SQLite DB, Vision-, Chat- und Embedding-Provider modular
 - **Frontend:** React + Vite, mobilfähig
 - **Uploads:** Bilder werden im Backend gespeichert
 - **RAG:** Retrieval über Embeddings, Chat mit Kontext
 
+**Modularität:**
+- Alle Provider (Vision, Chat, Embedding) sind über ENV-Variablen und Factory-Pattern austauschbar.
+- Embedding-Provider für die semantische Suche ist in `backend/app/rag/provider.py` und `backend/app/rag/factory.py` implementiert.
+- Standard ist ein Dummy-Provider, produktive Provider können einfach ergänzt werden.
+
 Weitere Details: siehe [docs/architecture.md](docs/architecture.md) und [docs/api.md](docs/api.md)
 
 ---
+
+
+## Embedding-Provider (RAG)
+
+- Der Embedding-Provider für die RAG-Suche ist modular und über die ENV-Variable `EMBEDDING_PROVIDER` auswählbar. Standard ist `dummy`.
+- Für produktive Nutzung stehen zur Verfügung:
+   - `local`: Setze `EMBEDDING_PROVIDER=local` für sentence-transformers (Modell: all-MiniLM-L6-v2, läuft lokal, keine Cloud-Kosten)
+   - `ollama`: Setze `EMBEDDING_PROVIDER=ollama`, optional `OLLAMA_EMBEDDING_MODEL` (Standard: `nomic-embed-text`), Ollama-Server muss laufen (`OLLAMA_HOST`)
+   - `api`/`openai`: Setze `EMBEDDING_PROVIDER=api` oder `openai`, `OPENAI_API_KEY` muss gesetzt sein, optional `OPENAI_EMBEDDING_MODEL` (Standard: `text-embedding-ada-002`)
+- Siehe Code in `backend/app/rag/index.py`.
+
+---
+
+
+## Beispiel: Lokaler Embedding-Provider
+
+Um lokale Embeddings zu nutzen (ohne Cloud, mit sentence-transformers):
+
+1. Stelle sicher, dass `sentence-transformers` installiert ist (siehe requirements.txt).
+2. Setze die Umgebungsvariable:
+   ```
+   EMBEDDING_PROVIDER=local
+   ```
+3. Das Modell `all-MiniLM-L6-v2` wird automatisch verwendet.
+4. Keine weiteren Einstellungen nötig.
+
+---
+
 
 ## Provider-System & Kosten
 

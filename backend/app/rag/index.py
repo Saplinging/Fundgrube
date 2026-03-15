@@ -1,9 +1,11 @@
+
 import os
 import numpy as np
 import pickle
 from typing import List, Dict, Any
 
-EMBEDDING_DIM = 128  # Dummy dimension
+EMBEDDING_PROVIDER = os.environ.get("EMBEDDING_PROVIDER", "dummy").lower()
+EMBEDDING_DIM = 128  # Dummy dimension, wird ggf. überschrieben
 INDEX_PATH = os.path.join(os.path.dirname(__file__), 'index.pkl')
 
 class DummyEmbeddingProvider:
@@ -12,19 +14,43 @@ class DummyEmbeddingProvider:
         np.random.seed(abs(hash(text)) % (2**32))
         return np.random.rand(EMBEDDING_DIM).astype(np.float32)
 
+class LocalEmbeddingProvider:
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
+        from sentence_transformers import SentenceTransformer
+        self.model = SentenceTransformer(model_name)
+        self.dim = self.model.get_sentence_embedding_dimension()
+
+    def embed(self, text: str) -> np.ndarray:
+        emb = self.model.encode([text], normalize_embeddings=True)[0]
+        return np.array(emb, dtype=np.float32)
+
+
+def get_embedding_provider():
+    if EMBEDDING_PROVIDER == "local":
+        provider = LocalEmbeddingProvider()
+        global EMBEDDING_DIM
+        EMBEDDING_DIM = provider.dim
+        return provider
+    # Default: Dummy
+    return DummyEmbeddingProvider()
+
 class RAGIndex:
     def __init__(self):
         self.index: Dict[str, Dict[str, Any]] = {}
         self.load()
 
-    def add(self, item_id: str, embedding: np.ndarray, model: str = "dummy"):
+
+    def add(self, item_id: str, embedding: np.ndarray, model: str = None):
+        if model is None:
+            model = EMBEDDING_PROVIDER
         self.index[item_id] = {
             "embedding": embedding,
             "embedding_model": model
         }
         self.save()
 
-    def update(self, item_id: str, embedding: np.ndarray, model: str = "dummy"):
+
+    def update(self, item_id: str, embedding: np.ndarray, model: str = None):
         self.add(item_id, embedding, model)
 
     def get(self, item_id: str):
