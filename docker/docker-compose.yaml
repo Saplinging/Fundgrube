@@ -9,6 +9,9 @@ services:
     environment:
       - VISION_PROVIDER=dummy
       - CHAT_PROVIDER=dummy
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - OLLAMA_VISION_MODEL=llava
+      - OLLAMA_CHAT_MODEL=llama3.2
     ports:
       - "8000:8000"
     restart: unless-stopped

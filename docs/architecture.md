@@ -23,12 +23,13 @@ Fundgrube ist ein modulares Lost-and-Found System mit automatischer Bildbeschrei
 - **Vision Provider:** Erzeugt Bildbeschreibungen (dummy, ollama, api/OpenAI)
 - **Chat Provider:** Generiert Antworten im Chat (dummy, ollama, api/OpenAI)
 - **Embedding Provider (RAG):** Erzeugt Text-Embeddings für die semantische Suche (dummy, local/sentence-transformers, weitere Provider möglich)
-- **Provider-Auswahl:**
-	- Über ENV-Variablen: `VISION_PROVIDER`, `CHAT_PROVIDER`, `EMBEDDING_PROVIDER`
-	- EMBEDDING_PROVIDER=local für lokale Embeddings (sentence-transformers, Modell all-MiniLM-L6-v2)
-	- API-Key für OpenAI: `OPENAI_API_KEY`
-	- Ollama-Host: `OLLAMA_HOST` (optional)
-- **Factory-Pattern:** Zentrale Auswahl/Instanziierung in `backend/app/llm/factory.py` (Vision/Chat) und `backend/app/rag/index.py` (Embedding)
+**Provider-Auswahl:**
+
+- Standardmäßig ist der Dummy-Provider für Vision und Chat aktiv (keine KI, sofort testbar)
+- Umstellung auf Ollama oder OpenAI per ENV-Variable möglich: `VISION_PROVIDER`, `CHAT_PROVIDER`, `EMBEDDING_PROVIDER`
+- EMBEDDING_PROVIDER=local für lokale Embeddings (sentence-transformers, Modell all-MiniLM-L6-v2)
+- API-Key für OpenAI: `OPENAI_API_KEY`
+- Ollama-Host: `OLLAMA_HOST` (optional)
 - **Erweiterbar:** Neue Provider können einfach ergänzt werden (siehe jeweilige Factory und Provider-BaseClass, für Embeddings siehe `index.py`)
 
 ---
