@@ -20,14 +20,21 @@ const Chat: React.FC = () => {
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
-    setMessages((msgs) => [...msgs, { sender: "user", text: input }]);
+    const userMessage: ChatMessage = { sender: "user", text: input };
+    const newMessages: ChatMessage[] = [...messages, userMessage];
+    setMessages(newMessages);
     setLoading(true);
     setError(null);
     try {
+      // Baue ein Array für das Backend im OpenAI-Format
+      const history = newMessages.map((msg) => ({
+        role: msg.sender === "user" ? "user" : "assistant",
+        content: msg.text
+      }));
       const res = await fetch("/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ message: input, history }),
       });
       if (!res.ok) throw new Error("Fehler beim Chat-Request");
       const data = await res.json();

@@ -190,6 +190,7 @@ async def search_items(body: dict = Body(...)):
 async def chat_with_rag(body: dict = Body(...)):
     message = body.get("message")
     top_k = int(body.get("top_k", 5))
+    history = body.get("history")
     if not message:
         raise HTTPException(status_code=400, detail="message fehlt")
     query_emb = embedding_provider.embed(message)
@@ -207,12 +208,33 @@ async def chat_with_rag(body: dict = Body(...)):
                     score=score,
                     imageUrl=item.image_path
                 ))
-                context_blocks.append(f"ID: {item.id}\nBeschreibung: {item.description}")
-    system_prompt = "Du bist ein Fundgrube-Experte. Nutze die folgenden Fundstücke, um die Nutzerfrage zu beantworten."
+                context_blocks.append(f"ID: {item.id}\nBeschreibung: {item.description}\nKontakt: {item.contact}")
+    system_prompt = (
+        "Du bist ein hilfsbereiter Assistent in einem digitalen Fundbüro. "
+        "Deine Aufgabe ist es, Menschen dabei zu helfen, verlorene Gegenstände wiederzufinden. "
+        "Nutze die Fundstücke aus der Datenbank (siehe Kontext unten), um gezielt auf die Nutzerfrage einzugehen. "
+        "Wenn mehrere Fundstücke in Frage kommen, stelle gezielte Rückfragen, um die Auswahl einzugrenzen, anstatt alle Objekte zu beschreiben. "
+        "Wenn nur noch ein Fundstück übrig bleibt, beschreibe dieses detailliert und frage, ob es sich um den gesuchten Gegenstand handelt. "
+        "Erst wenn der Nutzer dies bestätigt, gib die Kontaktdaten der Person aus, die das Fundstück gefunden hat. "
+        "WICHTIG: Du kannst keine Nachrichten oder Kontaktdaten speichern. Weise Nutzer freundlich darauf hin, dass im Chat keine persönlichen Daten aufgenommen werden können. "
+        "Wenn nichts Passendes dabei ist, erkläre freundlich, dass aktuell kein Treffer vorliegt."
+    )
     context = "\n\n".join(context_blocks)
-    chat_input = f"{system_prompt}\n\nKontext:\n{context}\n\nNutzer: {message}"
+    # Baue die Nachrichtenliste für das LLM
+    messages = []
+    messages.append({"role": "system", "content": system_prompt + "\n\nFundstücke in der Datenbank (Kontext):\n" + context})
+    if history and isinstance(history, list):
+        messages.extend(history)
+    else:
+        messages.append({"role": "user", "content": message})
     chat_provider = get_chat_provider()
-    chat_result = chat_provider.chat(chat_input)
+    # Wenn der Provider OpenAI-kompatibel ist, kann er messages entgegennehmen
+    if hasattr(chat_provider, "chat") and chat_provider.chat.__code__.co_argcount >= 2:
+        chat_result = chat_provider.chat(messages)
+    else:
+        # Fallback: Nur letzten Prompt schicken
+        chat_input = f"{system_prompt}\n\nFundstücke in der Datenbank (Kontext):\n{context}\n\nNutzer: {message}"
+        chat_result = chat_provider.chat(chat_input)
     return ChatResponse(answer=chat_result['answer'], matches=matches)
 
 @app.post("/items/{item_id}/describe", response_model=Fundstueck)

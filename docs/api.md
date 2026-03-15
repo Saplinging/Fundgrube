@@ -10,12 +10,19 @@ REST API für das Lost-and-Found System Fundgrube. Alle Endpunkte liefern JSON.
 
 ## Provider-System (Modularität)
 
+
 - Vision-, Chat- und Embedding-Provider sind modular aufgebaut und über ENV-Variablen auswählbar:
-	- `VISION_PROVIDER` (dummy/ollama/api) – **Standard: dummy**
-	- `CHAT_PROVIDER` (dummy/ollama/api) – **Standard: dummy**
-	- `EMBEDDING_PROVIDER` (dummy / local / ollama / api / openai)
+    - `VISION_PROVIDER` (dummy/ollama/api) – **Standard: dummy**
+    - `CHAT_PROVIDER` (dummy/ollama/api) – **Standard: dummy**
+    - `EMBEDDING_PROVIDER` (dummy / local / ollama / api / openai) – **Standard: dummy**
 - Die Factory-Pattern-Implementierung findet sich in `app/llm/factory.py` (Vision/Chat) und `app/rag/index.py` (Embedding).
-- **Standard:** Dummy-Provider für Vision und Chat. Für KI-Modelle ENV-Variablen anpassen (siehe README).
+- **Standard:** Dummy-Provider für Vision, Chat und Embedding. Für produktive KI-Modelle ENV-Variablen anpassen (siehe README). Niemals API-Keys öffentlich einchecken!
+
+---
+
+## KI-Provider aktivieren (optional)
+
+Für echte KI-Funktionen (OpenAI, Ollama etc.) siehe Hinweise zu ENV-Variablen in der README und passe die Provider in der docker-compose.yaml an. Setze dabei deinen eigenen API-Key niemals öffentlich ein!
 
 ## Endpunkte
 

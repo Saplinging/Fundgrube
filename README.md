@@ -76,6 +76,7 @@ Fundgrube ist ein modernes **Lost-and-Found System**:
    ```
 5. Frontend läuft auf http://localhost:5173, Backend auf http://localhost:8000
 
+
 ## Schnellstart (Docker)
 
 1. Docker & Docker Compose installieren
@@ -85,6 +86,12 @@ Fundgrube ist ein modernes **Lost-and-Found System**:
    ```
 3. Frontend: http://localhost:5173  Backend: http://localhost:8000
 4. Uploads und Datenbank bleiben nach Neustart erhalten
+
+---
+
+## KI-Provider aktivieren (optional)
+
+Standardmäßig laufen alle Provider im Dummy-Modus (keine echten KI-Funktionen, keine Kosten, keine Cloud-Abhängigkeit). Für produktive Nutzung mit OpenAI oder Ollama siehe die Hinweise zu ENV-Variablen oben und passe die Provider in der docker-compose.yaml an. Setze dabei deinen eigenen API-Key niemals öffentlich ein!
 
 ---
 

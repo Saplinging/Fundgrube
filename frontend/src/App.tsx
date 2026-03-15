@@ -14,7 +14,12 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/upload" element={<Upload />} />
         <Route path="/chat" element={<Chat />} />
-        <Route path="/" element={<div style={{ padding: 16 }}><h1>Willkommen zu Fundgrube</h1></div>} />
+          <Route path="/" element={
+            <div style={{ padding: 16 }}>
+              <h1>Willkommen in der Fundgrube!</h1>
+              <p>Uploade ein Bild eines gefundenen Gegenstands oder beschreibe einen gesuchten Gegenstand im Chat!</p>
+            </div>
+          } />
       </Routes>
     </Router>
   );

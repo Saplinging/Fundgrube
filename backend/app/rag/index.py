@@ -8,11 +8,32 @@ EMBEDDING_PROVIDER = os.environ.get("EMBEDDING_PROVIDER", "dummy").lower()
 EMBEDDING_DIM = 128  # Dummy dimension, wird ggf. überschrieben
 INDEX_PATH = os.path.join(os.path.dirname(__file__), 'index.pkl')
 
+
 class DummyEmbeddingProvider:
     def embed(self, text: str) -> np.ndarray:
         # Dummy: Hashtext zu Vektor
         np.random.seed(abs(hash(text)) % (2**32))
         return np.random.rand(EMBEDDING_DIM).astype(np.float32)
+
+class OpenAIEmbeddingProvider:
+    def __init__(self):
+        import openai
+        self.openai = openai
+        self.model = "text-embedding-ada-002"
+        self.dim = 1536
+
+    def embed(self, text: str) -> np.ndarray:
+        import os
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            raise RuntimeError("OPENAI_API_KEY nicht gesetzt!")
+        response = self.openai.Embedding.create(
+            input=text,
+            model=self.model,
+            api_key=api_key
+        )
+        emb = response["data"][0]["embedding"]
+        return np.array(emb, dtype=np.float32)
 
 class LocalEmbeddingProvider:
     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
@@ -26,9 +47,13 @@ class LocalEmbeddingProvider:
 
 
 def get_embedding_provider():
+    global EMBEDDING_DIM
     if EMBEDDING_PROVIDER == "local":
         provider = LocalEmbeddingProvider()
-        global EMBEDDING_DIM
+        EMBEDDING_DIM = provider.dim
+        return provider
+    if EMBEDDING_PROVIDER == "openai":
+        provider = OpenAIEmbeddingProvider()
         EMBEDDING_DIM = provider.dim
         return provider
     # Default: Dummy
