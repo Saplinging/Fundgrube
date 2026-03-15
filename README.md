@@ -1,34 +1,74 @@
+
 # Fundgrube
 
-Projektstruktur:
+Fundgrube ist ein modernes **Lost-and-Found System**:
 
-- frontend/
-- backend/
-  - app/
-    - llm/
-    - rag/
-    - db/
-    - routes/
-- docker/
+- **Upload von gefundenen Gegenständen** (z.B. Schlüssel, Portemonnaie, etc.)
+- **Automatische Bildbeschreibung** durch ein KI-Modell (LLM, z.B. OpenAI oder Ollama)
+- **Suche über Chat**: Nutzer können per Chat nach verlorenen Gegenständen suchen (RAG: Retrieval-Augmented Generation)
+- **Kontextuelle Trefferanzeige**: Passende Fundstücke werden im Chat als Kontext angezeigt
 
-Dieses Repository enthält die Grundstruktur für das Fundgrube-Projekt.
+---
+
+## Projektstruktur
+
+- `frontend/` – React + Vite App (Upload, Chat, UI)
+- `backend/`  – FastAPI REST API, SQLite DB, Vision/Chat-Provider, RAG
+  - `app/llm/` – Provider für Bildbeschreibung & Chat (dummy, ollama, api)
+  - `app/rag/` – Embedding, Index, Suche
+  - `app/db/`  – Datenbankmodelle
+  - `uploads/`  – Bilder-Uploads
+- `docker/`    – Dockerfiles & Compose
+- `docs/`      – Architektur, API
+
+---
+
+## Voraussetzungen / Requirements
+
+**Backend:**
+- Python >= 3.11
+- Empfohlen: venv/virtualenv
+- Abhängigkeiten: FastAPI, Uvicorn, SQLAlchemy, aiosqlite, numpy, requests, python-multipart
+  (siehe `backend/requirements.txt`)
+
+**Frontend:**
+- Node.js >= 20
+- npm >= 9
+- Abhängigkeiten: React, Vite, TypeScript (siehe `frontend/package.json`)
+
+---
+
+## Environment Variablen (Backend)
+
+| Variable           | Beschreibung                                 | Beispielwert           |
+|--------------------|----------------------------------------------|------------------------|
+| VISION_PROVIDER    | Provider für Bildbeschreibung                | dummy / ollama / api   |
+| CHAT_PROVIDER      | Provider für Chat                            | dummy / ollama / api   |
+| OPENAI_API_KEY     | API-Key für OpenAI (nur bei Provider=api)    | sk-...                 |
+| OLLAMA_HOST        | Host für Ollama-Server (optional)            | http://localhost:11434 |
+
+**Hinweis:**
+- Standardmäßig sind Dummy-Provider aktiv (keine echten KI-Funktionen, keine Kosten).
+- Für OpenAI/API muss ein API-Key gesetzt werden. Für Ollama muss ein Ollama-Server laufen.
+
+---
 
 ## Schnellstart (lokal)
 
 1. Python 3.11+ installieren
 2. Im backend-Ordner Abhängigkeiten installieren:
-  ```
-  pip install -r requirements.txt
-  ```
+   ```
+   pip install -r requirements.txt
+   ```
 3. Backend starten:
-  ```
-  uvicorn backend.app.main:app --reload
-  ```
+   ```
+   uvicorn backend.app.main:app --reload
+   ```
 4. Im frontend-Ordner Abhängigkeiten installieren:
-  ```
-  npm install
-  npm run dev
-  ```
+   ```
+   npm install
+   npm run dev
+   ```
 5. Frontend läuft auf http://localhost:5173, Backend auf http://localhost:8000
 
 ## Schnellstart (Docker)
@@ -41,66 +81,47 @@ Dieses Repository enthält die Grundstruktur für das Fundgrube-Projekt.
 3. Frontend: http://localhost:5173  Backend: http://localhost:8000
 4. Uploads und Datenbank bleiben nach Neustart erhalten
 
+---
 
-**Provider-System:**
-Das Backend unterstützt vollständig austauschbare Provider für Bildbeschreibung und Chat:
-- **dummy** (Standard, keine echten KI-Funktionen, keine Kosten)
-- **ollama** (lokale LLMs, z.B. Ollama-Server)
-- **api** oder **openai** (externe APIs, z.B. OpenAI, Kosten möglich)
-Die Auswahl erfolgt über ENV-Variablen (VISION_PROVIDER, CHAT_PROVIDER). Die Provider werden zentral über eine Factory verwaltet – es gibt keine harte Kopplung an Dummy-Provider im Code.
+## Demo Walkthrough
 
-**Hinweis:** Standardmäßig sind Dummy-Provider für Bildbeschreibung und Chat aktiv. Diese erzeugen Testdaten und verursachen keine Kosten.
+1. **Projekt starten** (siehe Schnellstart oben)
+2. **Bild hochladen** im Frontend (Seite "Upload")
+3. **Automatische Beschreibung** wird durch das Backend erzeugt (LLM)
+4. **Chatfrage stellen** (Seite "Chat") – z.B. "Ich habe einen Schlüssel gefunden"
+5. **Treffer werden angezeigt**: Passende Fundstücke erscheinen als Kontext im Chat
 
-environment:
-
-**Echte KI-Provider aktivieren:**
-Um z.B. OpenAI oder Ollama zu nutzen, stelle die ENV-Variablen wie folgt ein (Beispiele):
-
-Für OpenAI (API):
-```
-environment:
-  - VISION_PROVIDER=api
-  - CHAT_PROVIDER=api
-  - OPENAI_API_KEY=dein_api_key
-```
-
-Für Ollama (lokal):
-```
-environment:
-  - VISION_PROVIDER=ollama
-  - CHAT_PROVIDER=ollama
-```
-
-Solange VISION_PROVIDER und CHAT_PROVIDER auf "dummy" stehen, entstehen keine Kosten.
+---
 
 ## Architekturüberblick
 
-- **Backend:** FastAPI REST API, SQLite DB, Vision- und Chat-Provider austauschbar
+- **Backend:** FastAPI REST API, SQLite DB, Vision- und Chat-Provider modular
 - **Frontend:** React + Vite, mobilfähig
 - **Uploads:** Bilder werden im Backend gespeichert
 - **RAG:** Retrieval über Embeddings, Chat mit Kontext
 
-## Beispielablauf
+Weitere Details: siehe [docs/architecture.md](docs/architecture.md) und [docs/api.md](docs/api.md)
 
-1. Bild im Frontend hochladen
-2. Beschreibung wird automatisch erzeugt
-3. Chatfrage stellen, Treffer werden als Kontext genutzt
+---
 
+## Provider-System & Kosten
 
-## LLM Provider wechseln & Kosten
-
-- Die Provider für Bildbeschreibung und Chat werden über ENV-Variablen gesteuert (VISION_PROVIDER, CHAT_PROVIDER).
+- Die Provider für Bildbeschreibung und Chat werden über ENV-Variablen gesteuert (`VISION_PROVIDER`, `CHAT_PROVIDER`).
 - Standard ist "dummy" (keine echten KI-Funktionen, keine Kosten).
-- Für OpenAI/API muss ein API-Key gesetzt werden (OPENAI_API_KEY). Für Ollama muss ein Ollama-Server laufen.
-- Für externe Provider fallen in der Regel Kosten an (siehe Anbieter).
-- Die Auswahl und Instanziierung erfolgt modular über eine zentrale Factory (siehe backend/app/llm/factory.py).
-- Beispiel-Konfiguration siehe oben und in docker/docker-compose.yaml.
-- Weitere Infos: docs/architecture.md
+- Für OpenAI/API muss ein API-Key gesetzt werden (`OPENAI_API_KEY`). Für Ollama muss ein Ollama-Server laufen.
+- Für externe Provider können Kosten entstehen (siehe Anbieter).
+- Die Auswahl und Instanziierung erfolgt modular über eine zentrale Factory ([backend/app/llm/factory.py](backend/app/llm/factory.py)).
+- Beispiel-Konfiguration siehe oben und in [docker/docker-compose.yaml](docker/docker-compose.yaml).
 
-**Weiterentwicklung:**
-- Das Provider-System ist jetzt vollständig modular und kann einfach um weitere Provider erweitert werden.
-- Dummy-Provider dienen nur zu Test- und Demozwecken.
+---
+
+## Weiterentwicklung
+
+- Das Provider-System ist modular und kann einfach um weitere Provider erweitert werden.
+- Dummy-Provider dienen zu Test- und Demozwecken.
+
+---
 
 ## API & Details
 
-Siehe docs/api.md und docs/architecture.md
+Siehe [docs/api.md](docs/api.md) und [docs/architecture.md](docs/architecture.md)

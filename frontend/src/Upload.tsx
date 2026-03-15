@@ -81,7 +81,7 @@ const Upload: React.FC = () => {
           placeholder="Kontaktmöglichkeit (E-Mail oder Telefonnummer) *"
           value={contact}
           onChange={e => setContact(e.target.value)}
-          style={{ padding: 10, fontSize: 15, borderRadius: 8, border: "1px solid #ccc" }}
+          style={{ padding: 10, fontSize: 15, borderRadius: 8, border: "1px solid #3b3b3b" }}
           required
         />
         {preview && (

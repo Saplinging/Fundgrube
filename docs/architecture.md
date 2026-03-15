@@ -1,46 +1,71 @@
-# Architektur
 
-## LLM Provider Schnittstelle
+# Architektur Fundgrube
 
-### Verfügbare Provider
-- DummyVisionProvider (Standard)
-- DummyChatProvider (Standard)
+## Überblick
 
-### Provider-Auswahl
-Die Auswahl des Vision- und Chat-Providers erfolgt ausschließlich über ENV-Variablen:
+Fundgrube ist ein modulares Lost-and-Found System mit automatischer Bildbeschreibung und semantischer Suche per Chat (RAG).
 
-- `VISION_PROVIDER` (z.B. "dummy")
-- `CHAT_PROVIDER` (z.B. "dummy")
-
-Weitere Provider können durch Implementierung der Basisklassen ergänzt werden. Die Factory wählt den Provider anhand der Konfiguration aus.
-
-### Response-Formate
-- Vision: `{ "description": "...", "model": "...", "latency_ms": ... }`
-- Chat: `{ "answer": "...", "model": "...", "latency_ms": ... }`
-
+---
 
 ## Komponenten
 
-- **Backend:** FastAPI, REST API, SQLite, Embedding- und RAG-Logik, Vision/Chat-Provider
-- **Frontend:** React, Upload- und Chat-UI, mobilfähig
-- **Uploads:** Speicherung im Backend (uploads/)
-- **Datenbank:** SQLite, Tabelle items
-- **RAG:** Embedding-Provider, Index, Suche
+- **Frontend:** React + Vite, Upload- und Chat-UI, mobilfähig
+- **Backend:** FastAPI REST API, SQLite DB, Vision/Chat-Provider, Embedding, RAG-Logik
+- **Uploads:** Speicherung im Backend (`backend/uploads/`)
+- **Datenbank:** SQLite, Tabelle `items` (`backend/app/db/database.py`)
+- **RAG:** Embedding-Provider, Index, semantische Suche
 
-## Datenfluss
+---
 
-**Upload:**
-Frontend → POST /items → Backend speichert Bild, ruft Vision Provider, speichert Beschreibung & Embedding, Antwort an Frontend
+## Provider-System
 
-**Suche:**
-Frontend → POST /search → Backend wandelt Query in Embedding, sucht im Index, gibt Treffer zurück
+- **Vision Provider:** Erzeugt Bildbeschreibungen (dummy, ollama, api/OpenAI)
+- **Chat Provider:** Generiert Antworten im Chat (dummy, ollama, api/OpenAI)
+- **Provider-Auswahl:**
+	- Über ENV-Variablen: `VISION_PROVIDER`, `CHAT_PROVIDER`
+	- API-Key für OpenAI: `OPENAI_API_KEY`
+	- Ollama-Host: `OLLAMA_HOST` (optional)
+- **Factory-Pattern:** Zentrale Auswahl/Instanziierung in `backend/app/llm/factory.py`
+- **Erweiterbar:** Neue Provider können einfach ergänzt werden
 
-**Chat:**
-Frontend → POST /chat → Backend sucht Kontext, baut Prompt, ruft Chat Provider, Antwort inkl. Trefferliste
+---
 
-## Konfigurationspunkte
+## Datenfluss & Ablauf
 
-- Vision Provider: ENV VISION_PROVIDER
-- Chat Provider: ENV CHAT_PROVIDER
-- DB-Pfad: fest in backend/app/db/database.py
-- Upload-Ordner: backend/uploads/
+```mermaid
+flowchart TD
+		A[Frontend: Upload-Formular] -->|POST /items| B(Backend: Bild speichern, Vision Provider)
+		B -->|Beschreibung & Embedding speichern| C[DB & Index]
+		C -->|Antwort mit Beschreibung| A
+		D[Frontend: Chat] -->|POST /chat| E(Backend: Suche im Index, Kontext bauen, Chat Provider)
+		E -->|Antwort & Treffer| D
+		F[Frontend: Suche] -->|POST /search| G(Backend: Suche im Index)
+		G -->|Treffer| F
+```
+
+---
+
+## ENV-Variablen (Backend)
+
+| Variable           | Beschreibung                                 | Beispielwert           |
+|--------------------|----------------------------------------------|------------------------|
+| VISION_PROVIDER    | Provider für Bildbeschreibung                | dummy / ollama / api   |
+| CHAT_PROVIDER      | Provider für Chat                            | dummy / ollama / api   |
+| OPENAI_API_KEY     | API-Key für OpenAI (nur bei Provider=api)    | sk-...                 |
+| OLLAMA_HOST        | Host für Ollama-Server (optional)            | http://localhost:11434 |
+
+---
+
+## Response-Formate Provider
+
+- **Vision:** `{ "description": "...", "model": "...", "latency_ms": ... }`
+- **Chat:** `{ "answer": "...", "model": "...", "latency_ms": ... }`
+
+---
+
+## Hinweise & Erweiterung
+
+- Die Architektur ist modular, Provider können einfach ergänzt werden.
+- Dummy-Provider erzeugen Testdaten (keine Kosten).
+- Uploads und Datenbank bleiben nach Neustart erhalten.
+- Für API-Details siehe [api.md](api.md)
